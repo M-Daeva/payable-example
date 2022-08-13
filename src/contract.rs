@@ -119,13 +119,10 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{
-        attr, coins, from_binary, Empty, Env, MessageInfo, OwnedDeps, Response, Uint128,
-    };
+    use cosmwasm_std::{attr, from_binary, Empty, Env, MessageInfo, OwnedDeps, Response, Uint128};
 
     pub const OWNER_ADDR: &str = "addr1";
     pub const TOKEN_ADDR: &str = "addr2";
-    pub const ADDR3: &str = "addr3";
 
     type Instance = (
         OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>,
@@ -139,7 +136,6 @@ mod tests {
         let env = mock_env();
         let info = mock_info(addr, &[]);
         let msg = InstantiateMsg { staking_token };
-
         let res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg);
         (deps, env, info, res)
     }
@@ -162,18 +158,16 @@ mod tests {
 
     #[test]
     fn test_execute() {
-        let (mut deps, env, info, res) = get_instance(TOKEN_ADDR.to_string(), OWNER_ADDR);
-
+        let (mut deps, env, info, _) = get_instance(TOKEN_ADDR.to_string(), OWNER_ADDR);
         let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
             amount: Uint128::new(420),
             sender: String::from(OWNER_ADDR),
             msg: to_binary(&Cw20HookMsg::StakeVotingTokens {}).unwrap(),
         });
-
-        let res2 = execute(deps.as_mut(), env, info, msg);
+        let res = execute(deps.as_mut(), env, info, msg);
 
         assert_eq!(
-            res2.unwrap().attributes,
+            res.unwrap().attributes,
             vec![
                 attr("method", "receive_cw20"),
                 attr("owner", OWNER_ADDR),
@@ -186,20 +180,16 @@ mod tests {
 
     #[test]
     fn test_query() {
-        let (mut deps, env, info, res) = get_instance(TOKEN_ADDR.to_string(), OWNER_ADDR);
-
+        let (mut deps, env, info, _) = get_instance(TOKEN_ADDR.to_string(), OWNER_ADDR);
         let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
             amount: Uint128::new(420),
             sender: String::from(OWNER_ADDR),
             msg: to_binary(&Cw20HookMsg::StakeVotingTokens {}).unwrap(),
         });
-
         execute(deps.as_mut(), env.clone(), info, msg);
 
         let msg = QueryMsg::GetAmount {};
-
         let bin = query(deps.as_ref(), env, msg).unwrap();
-
         let res = from_binary::<GetAmountResponse>(&bin).unwrap();
 
         assert_eq!(
